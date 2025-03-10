@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View, Text, FlatList, Image, Pressable } from 'react-native';
 import { ImageListProps } from '../utils/props';
 
-export default function ImageList({ marker, onAddImage, onRemoveImage }: ImageListProps) {
+export default function ImageList({ marker, onAddImage, onRemoveImage}: ImageListProps) {
   return (
     <View style={styles.container}>
       <Text style={styles.subtitle}>Изображения</Text>
@@ -11,10 +11,10 @@ export default function ImageList({ marker, onAddImage, onRemoveImage }: ImageLi
       </Pressable>
       <FlatList
         data={marker.images || []}
-        keyExtractor={(item) => item}
+        keyExtractor={(item) => item.uri}
         renderItem={({ item }) => (
           <View style={styles.imageContainer}>
-            <Image source={{ uri: item }} style={styles.image} />
+            <Image source={{ uri: item.uri }} style={styles.image} />
             <Pressable style={styles.removeButton} onPress={() => onRemoveImage(item)}>
               <Text style={styles.removeButtonText}>Удалить</Text>
             </Pressable>

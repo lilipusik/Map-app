@@ -1,17 +1,34 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, TextInput, Pressable } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams } from 'expo-router';
-import { MarkerData } from '../../utils/types';
-import { useMarkerStore } from '../../utils/store';
+import { MarkerData, MarkerImage } from '../../utils/types';
 import ImageList from '../../components/ImageList';
+import Toast, { ToastConfigParams } from 'react-native-toast-message';
+import { useDatabase } from '../../contexts/DatabaseContext';
 
 export default function MarkerDetails() {
   const { marker: markerString } = useLocalSearchParams();
   const marker = JSON.parse(markerString as string) as MarkerData;
-  const { updateMarker, addImageToMarker, removeImageFromMarker, markers } = useMarkerStore();
+  const [currentMarker, setCurrentMarker] = useState<MarkerData>(marker);
+  const { getMarkerById, getImages, updateMarker, addImage, deleteImage } = useDatabase();
 
-  const currentMarker = markers.find((m) => m.id === marker.id) || marker;
+  useEffect(() => {
+    const fetchMarkerData = async () => {
+      try {
+        const markerData = await getMarkerById(marker.id!);
+        const images = await getImages(marker.id!);
+        setCurrentMarker({
+          ...markerData!,
+          images: images,
+        });
+      } catch (error) {
+        console.error('Ошибка при получении данных маркера:', error);
+      }
+    };
+
+    fetchMarkerData();
+  }, [marker.id, getMarkerById, getImages]);
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -28,18 +45,80 @@ export default function MarkerDetails() {
     });
 
     if (!result.canceled) {
-      const imageUri = result.assets[0].uri;
-      addImageToMarker(currentMarker.id, imageUri);
+      try {
+        const imageUri = result.assets[0].uri;
+        await addImage({ marker_id: currentMarker.id!, uri: imageUri });
+        setCurrentMarker((prev) => ({
+          ...prev,
+          images: [...(prev.images || []), { marker_id: currentMarker.id!, uri: imageUri }],
+        }));
+        Toast.show({
+          type: 'success',
+          text1: 'Сохранено',
+          text2: 'Изображение добавлено',
+          position: 'bottom',
+        });
+      } catch (error) {
+        console.error('Ошибка при добавлении изображения:', error);
+        Toast.show({
+          type: 'error',
+          text1: 'Ошибка',
+          text2: 'Не удалось добавить изображение',
+          position: 'bottom',
+        });
+      }
     }
   };
 
-  const removeImage = (uri: string) => {
-    removeImageFromMarker(currentMarker.id, uri);
+  const removeImage = async (image: MarkerImage) => {
+    try {
+      await deleteImage(image);
+      setCurrentMarker((prev) => ({
+        ...prev,
+        images: prev.images?.filter((img) => img.id !== image.id),
+      }));
+      Toast.show({
+        type: 'success',
+        text1: 'Сохранено',
+        text2: 'Изображение удалено',
+        position: 'bottom',
+      });
+    } catch (error) {
+      console.error('Ошибка при удалении изображения:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Ошибка',
+        text2: 'Не удалось удалить изображение',
+        position: 'bottom',
+      });
+    }
   };
 
-  const handleSave = () => {
-    updateMarker(currentMarker);
-    alert('Данные сохранены!');
+  const handleSave = async () => {
+    try {
+      await updateMarker(currentMarker);
+      const updatedMarker = await getMarkerById(currentMarker.id!);
+      const images = await getImages(currentMarker.id!);
+      setCurrentMarker({
+        ...updatedMarker!,
+        images: images,
+      });
+
+      Toast.show({
+        type: 'success',
+        text1: 'Сохранено',
+        text2: 'Маркер успешно обновлен',
+        position: 'bottom',
+      });
+    } catch (error) {
+      console.error('Ошибка при сохранении маркера:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Ошибка',
+        text2: 'Не удалось сохранить маркер',
+        position: 'bottom',
+      });
+    }
   };
 
   return (
@@ -49,16 +128,20 @@ export default function MarkerDetails() {
         style={styles.input}
         placeholder="Название"
         value={currentMarker.title}
-        onChangeText={(text) => updateMarker({ ...currentMarker, title: text })}
+        onChangeText={(text) =>
+          setCurrentMarker((prev) => ({ ...prev, title: text }))
+        }
       />
       <TextInput
         style={styles.input}
         placeholder="Описание"
         value={currentMarker.description}
-        onChangeText={(text) => updateMarker({ ...currentMarker, description: text })}
+        onChangeText={(text) =>
+          setCurrentMarker((prev) => ({ ...prev, description: text }))
+        }
       />
       <TextInput
-        style={styles.input}
+        style={styles.readonly}
         placeholder="Адрес"
         value={currentMarker.address}
         readOnly
@@ -73,6 +156,7 @@ export default function MarkerDetails() {
         onAddImage={pickImage}
         onRemoveImage={removeImage}
       />
+      <Toast config={toastConfig} />
     </View>
   );
 }
@@ -89,10 +173,19 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
+    borderColor: 'rgb(164, 155, 212)',
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 10,
+    color: 'rgb(108, 62, 151)',
+  },
+  readonly: {
+    borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 5,
     padding: 10,
     marginBottom: 10,
+    color: 'rgb(0, 0, 0)',
   },
   saveButton: {
     backgroundColor: 'rgb(164, 155, 212)',
@@ -109,3 +202,18 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
+const toastConfig = {
+  success: ({ text1, text2 }: ToastConfigParams<any>) => (
+    <View style={{ backgroundColor: 'rgb(164, 155, 212)', padding: 10, borderRadius: 5 }}>
+      <Text style={{ color: 'white', fontWeight: 'bold' }}>{text1}</Text>
+      <Text style={{ color: 'white' }}>{text2}</Text>
+    </View>
+  ),
+  error: ({ text1, text2 }: ToastConfigParams<any>) => (
+    <View style={{ backgroundColor: 'rgb(119, 60, 60)', padding: 10, borderRadius: 5 }}>
+      <Text style={{ color: 'white', fontWeight: 'bold' }}>{text1}</Text>
+      <Text style={{ color: 'white' }}>{text2}</Text>
+    </View>
+  ),
+};

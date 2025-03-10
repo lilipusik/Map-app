@@ -1,4 +1,4 @@
-import { MarkerData } from './types';
+import { MarkerData, MarkerImage } from './types';
 
 export interface MapProps {
     markers: MarkerData[];
@@ -11,7 +11,7 @@ export interface MapProps {
 export interface ImageListProps {
     marker: MarkerData;
     onAddImage: () => void;
-    onRemoveImage: (uri: string) => void;
+    onRemoveImage: (image: MarkerImage) => void;
 };
 
 export interface MarkerActionProps {

@@ -1,20 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View, StatusBar, Modal, Text } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useMarkerStore } from '../utils/store';
+import { useFocusEffect, useRouter } from 'expo-router';
 import Map from '../components/Map';
-import { MarkerData } from '../utils/types';
 import MarkerAction from '../components/MarkerAction';
+import { MarkerData } from '../utils/types';
+import { useDatabase } from '../contexts/DatabaseContext';
 
 export default function MapScreen() {
-  const { markers, addMarker, deleteMarker } = useMarkerStore();
+  const [markers, setMarkers] = useState<MarkerData[]>([]);
   const [selectedMarker, setSelectedMarker] = useState<MarkerData | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
   const router = useRouter();
+  const { getAllMarkers, addMarker, deleteMarker } = useDatabase();
 
-  const handleAddMarker = (marker: MarkerData) => {
-    addMarker(marker);
+  const loadMarkers = async () => {
+    try {
+      const loadedMarkers = await getAllMarkers();
+      setMarkers(loadedMarkers);
+    } catch (error) {
+      console.error('Ошибка при загрузке маркеров:', error);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      loadMarkers();
+    }, [getAllMarkers])
+  );
+
+  const handleAddMarker = async (marker: MarkerData) => {
+    try {
+      const newMarkerId = await addMarker(marker);
+      if (newMarkerId) {
+        setMarkers((prev) => [...prev, { ...marker, id: newMarkerId }]);
+      }
+    } catch (error) {
+      console.error('Ошибка при добавлении маркера:', error);
+    }
   };
 
   const handleMarkerPress = (marker: MarkerData) => {
@@ -22,9 +45,14 @@ export default function MapScreen() {
     setModalVisible(true);
   };
 
-  const handleDeleteMarker = (markerId: string) => {
-    deleteMarker(markerId);
-    setModalVisible(false);
+  const handleDeleteMarker = async (marker: MarkerData) => {
+    try {
+      await deleteMarker(marker);
+      setMarkers((prev) => prev.filter((m) => m.id !== marker.id));
+      setModalVisible(false);
+    } catch (error) {
+      console.error('Ошибка при удалении маркера:', error);
+    }
   };
 
   const handleMapReady = () => {
@@ -59,7 +87,7 @@ export default function MapScreen() {
           }}
           onDeletePress={() => {
             if (selectedMarker) {
-              handleDeleteMarker(selectedMarker.id);
+              handleDeleteMarker(selectedMarker);
             }
           }}
           onCancelPress={() => setModalVisible(false)}

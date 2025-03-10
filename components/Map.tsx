@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import MapView, { Marker, LongPressEvent } from 'react-native-maps';
-import 'react-native-get-random-values';
-import { v4 as uuidv4 } from 'uuid';
 import { MarkerData } from '../utils/types';
 import { getAddress } from '../utils/address';
 import { MapProps } from '../utils/props';
@@ -25,7 +23,6 @@ export default function Map({ markers, onMarkerPress, onMapReady, onError, onAdd
     try {
       const address = await getAddress(latitude, longitude);
       const newMarker: MarkerData = {
-        id: uuidv4(),
         latitude,
         longitude,
         title: `Маркер ${markers.length + 1}`,
@@ -51,8 +48,8 @@ export default function Map({ markers, onMarkerPress, onMapReady, onError, onAdd
         initialRegion={{
           latitude: 58.000000,
           longitude: 56.3,
-          latitudeDelta: 0.0,
-          longitudeDelta: 0.0,
+          latitudeDelta: 1,
+          longitudeDelta: 1,
         }}
         onLongPress={handleLongPress}
         onMapReady={handleMapReady}

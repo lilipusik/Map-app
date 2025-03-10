@@ -3380,6 +3380,11 @@ expo-router@^4.0.17:
     semver "~7.6.3"
     server-only "^0.0.1"
 
+expo-sqlite@^15.1.2:
+  version "15.1.2"
+  resolved "https://registry.npmjs.org/expo-sqlite/-/expo-sqlite-15.1.2.tgz"
+  integrity sha512-xe+v56ts6GWJoNXLpWBQJmIPd7K1Bk9tmWc2b0nV5yUjqXZX3lbTYm8QhXEqUJxYu87o2GSkNqAqNKeDbMUXGQ==
+
 expo-status-bar@~2.0.1:
   version "2.0.1"
   resolved "https://registry.npmjs.org/expo-status-bar/-/expo-status-bar-2.0.1.tgz"
@@ -5431,6 +5436,11 @@ react-native-screens@*, "react-native-screens@>= 4.0.0", react-native-screens@~4
   dependencies:
     react-freeze "^1.0.0"
     warn-once "^0.1.0"
+
+react-native-toast-message@^2.2.1:
+  version "2.2.1"
+  resolved "https://registry.npmjs.org/react-native-toast-message/-/react-native-toast-message-2.2.1.tgz"
+  integrity sha512-iXFMnlxPcgKKs4bZOIl06W16m6KXMh/bAYpWLyVXlISSCdcL2+FX5WPpRP3TGQeM/u9q+j5ex48DDY+72en+Sw==
 
 react-native@*, "react-native@>= 0.64.3", react-native@>=0.56, react-native@>=0.73.0, react-native@0.76.7:
   version "0.76.7"
