@@ -1,18 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker, LongPressEvent } from 'react-native-maps';
+import { Ionicons } from '@expo/vector-icons';
 import { MarkerData } from '../utils/types';
 import { getAddress } from '../utils/address';
 import { MapProps } from '../utils/props';
+import * as Location from 'expo-location';
+import userLocationIcon from '../assets/user-location.png';
 
-export default function Map({ markers, onMarkerPress, onMapReady, onError, onAddMarker }: MapProps) {
+export default function Map({ markers, onMarkerPress, onMapReady, onError, onAddMarker, userLocation }: MapProps 
+  & { userLocation: Location.LocationObject | null }) {
   const [isMapReady, setIsMapReady] = useState(false);
+  const mapRef = useRef<MapView>(null);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (!isMapReady) {
         onError('Не удалось загрузить карту. Пожалуйста, проверьте подключение к интернету.');
       }
+      
     }, 10000);
 
     return () => clearTimeout(timeout);
@@ -41,9 +47,21 @@ export default function Map({ markers, onMarkerPress, onMapReady, onError, onAdd
     onMapReady();
   };
 
+  const handleFocusOnUserLocation = () => {
+    if (userLocation && mapRef.current) {
+      mapRef.current.animateToRegion({
+        latitude: userLocation.coords.latitude,
+        longitude: userLocation.coords.longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      });
+    }
+  };
+
   return (
     <View style={styles.container}>
       <MapView
+        ref={mapRef}
         style={styles.map}
         initialRegion={{
           latitude: 58.000000,
@@ -53,6 +71,9 @@ export default function Map({ markers, onMarkerPress, onMapReady, onError, onAdd
         }}
         onLongPress={handleLongPress}
         onMapReady={handleMapReady}
+        // геолокация вообще делаяется так, но по заданию видимо надо херней страдать
+        // showsUserLocation={true}
+        // followsUserLocation={true}
       >
         {markers.map((marker) => (
           <Marker
@@ -63,7 +84,20 @@ export default function Map({ markers, onMarkerPress, onMapReady, onError, onAdd
             onPress={() => onMarkerPress(marker)}
           />
         ))}
+        {userLocation && (
+          <Marker
+            coordinate={{
+              latitude: userLocation.coords.latitude,
+              longitude: userLocation.coords.longitude,
+            }}
+            icon={userLocationIcon}
+            title="Ваше местоположение"
+          />
+        )}
       </MapView>
+      <TouchableOpacity style={styles.locationButton} onPress={handleFocusOnUserLocation}>
+        <Ionicons name="locate" size={24} color="white" />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -75,5 +109,21 @@ const styles = StyleSheet.create({
   map: {
     width: '100%',
     height: '100%',
+  },
+  locationButton: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    backgroundColor: '#a49bd4',
+    borderRadius: 50,
+    width: 50,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 2,
+    elevation: 5,
   },
 });

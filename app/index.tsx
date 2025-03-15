@@ -5,6 +5,9 @@ import Map from '../components/Map';
 import MarkerAction from '../components/MarkerAction';
 import { MarkerData } from '../utils/types';
 import { useDatabase } from '../contexts/DatabaseContext';
+import { useLocation } from '../services/location';
+import { notificationManager } from '../services/notifications';
+import * as Location from 'expo-location';
 
 export default function MapScreen() {
   const [markers, setMarkers] = useState<MarkerData[]>([]);
@@ -13,6 +16,15 @@ export default function MapScreen() {
   const [mapError, setMapError] = useState<string | null>(null);
   const router = useRouter();
   const { getAllMarkers, addMarker, deleteMarker } = useDatabase();
+  const { location, errorMsg } = useLocation({
+    accuracy: Location.Accuracy.High,
+    timeInterval: 5000, // Обновление каждые 5 секунд
+    distanceInterval: 10, // Минимальное расстояние 10 метров
+  });
+
+  useEffect(() => {
+    notificationManager.setupNotifications();
+  }, []);
 
   const loadMarkers = async () => {
     try {
@@ -22,6 +34,12 @@ export default function MapScreen() {
       console.error('Ошибка при загрузке маркеров:', error);
     }
   };
+
+  useEffect(() => {
+    if (location && markers.length > 0) {
+      notificationManager.checkProximity(location.coords, markers);
+    }
+  }, [location, markers]);
 
   useFocusEffect(
     useCallback(() => {
@@ -50,6 +68,7 @@ export default function MapScreen() {
       await deleteMarker(marker);
       setMarkers((prev) => prev.filter((m) => m.id !== marker.id));
       setModalVisible(false);
+      await notificationManager.removeNotification(marker.id!);
     } catch (error) {
       console.error('Ошибка при удалении маркера:', error);
     }
@@ -67,12 +86,18 @@ export default function MapScreen() {
           <Text style={styles.errorText}>{mapError}</Text>
         </View>
       )}
+      {errorMsg && (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{errorMsg}</Text>
+        </View>
+      )}
       <Map
         markers={markers}
         onMarkerPress={handleMarkerPress}
         onMapReady={handleMapReady}
         onError={setMapError}
         onAddMarker={handleAddMarker}
+        userLocation={location}
       />
 
       <Modal visible={modalVisible} transparent animationType="slide">

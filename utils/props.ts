@@ -1,4 +1,5 @@
 import { MarkerData, MarkerImage } from './types';
+import * as Location from 'expo-location';
 
 export interface MapProps {
     markers: MarkerData[];
