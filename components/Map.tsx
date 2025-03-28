@@ -3,7 +3,7 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker, LongPressEvent } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import { MarkerData } from '../utils/types';
-import { getAddress } from '../utils/address';
+import { getAddress } from '../services/address';
 import { MapProps } from '../utils/props';
 import * as Location from 'expo-location';
 import userLocationIcon from '../assets/user-location.png';

@@ -119,7 +119,7 @@ export const deleteMarker = async (marker: MarkerData): Promise<void> => {
 
   await db.runAsync(`DELETE FROM markers WHERE id = ?`, [marker.id!]);
 
-  console.log(`Маркер id = ${marker.id!} упешно удален`);
+  console.log(`Маркер id = ${marker.id!} успешно удален`);
 };
 
 // Удаление изображения
@@ -131,5 +131,5 @@ export const deleteImage = async (image: MarkerImage): Promise<void> => {
 
   await db.runAsync(`DELETE FROM marker_images WHERE id = ?`, [image.id!]);
 
-  console.log(`Изображение id = ${image.id!} упешно удалено`);
+  console.log(`Изображение id = ${image.id!} успешно удалено`);
 };
