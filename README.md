@@ -99,3 +99,6 @@
 
 ## Проблемы и ограничения
 1. Работа приложения проверена на Andriod, при работе с IOS могут возникнуть траблы
+
+## Видео работы приложения
+Ссылка: https://drive.google.com/file/d/1Y_yNNaL5AlZuPJW6yEkXXIbJgU_kpcIE/view?usp=drive_link
